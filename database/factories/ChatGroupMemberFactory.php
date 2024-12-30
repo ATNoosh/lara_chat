@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\ChatGroup;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,8 @@ class ChatGroupMemberFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'chat_group_id' => ChatGroup::factory(),
+            'user_id' => User::factory(),
         ];
     }
 }

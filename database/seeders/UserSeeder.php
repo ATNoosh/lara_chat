@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ChatGroup;
+use App\Models\ChatGroupMember;
 use App\Models\ChatMessage;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -20,7 +21,8 @@ class UserSeeder extends Seeder
             ->has(
                 ChatGroup::factory()->count(10)->has(
                     ChatMessage::factory()->count(20)
-                ),
+                )
+                    ->has(ChatGroupMember::factory()->count(20), 'members'),
                 'createdChatGroups'
             )
             ->create();
