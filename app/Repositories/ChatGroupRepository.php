@@ -12,29 +12,30 @@ class ChatGroupRepository
     public function createFaceToFaceeGroup(User $creator, User $secondUser): ChatGroup|null
     {
         $newChatGroup = $this->getFaceToFaceeGroup($creator, $secondUser);
-        if ($newChatGroup)
+        if ($newChatGroup) {
             return $newChatGroup;
-        DB::beginTransaction();
-        try {
-            $newChatGroup = ChatGroup::updateOrCreate(
-                [
-                    'name' => $creator->id . '_' . $secondUser->id,
-                    'creator_id' => $creator->id
-                ]
-            );
-            $newChatGroup->members()->attach([$creator->id, $secondUser->id]);
-        } catch (Exception $exp) {
-            DB::rollBack();
-            return null;
+        } else {
+            DB::beginTransaction();
+            try {
+                $newChatGroup = ChatGroup::create(
+                    [
+                        'name' => $creator->id . '_' . $secondUser->id,
+                        'creator_id' => $creator->id
+                    ]
+                );
+                $newChatGroup->members()->attach([$creator->id, $secondUser->id]);
+            } catch (Exception $exp) {
+                DB::rollBack();
+                return null;
+            }
+            DB::commit();
         }
-        DB::commit();
-
         return $newChatGroup;
     }
 
     public function getFaceToFaceeGroup(User $creator, User $secondUser): ChatGroup|null
     {
-        $newChatGroup = ChatGroup::orWhere(function ($query) use ($creator, $secondUser) {
+        $group = ChatGroup::orWhere(function ($query) use ($creator, $secondUser) {
             $query->where('name', $creator->id . '_' . $secondUser->id)
                 ->where('creator_id', $creator->id);
         })->orWhere(function ($query) use ($creator, $secondUser) {
@@ -42,6 +43,6 @@ class ChatGroupRepository
                 ->where('creator_id', $secondUser->id);
         })->first();
 
-        return $newChatGroup;
+        return $group;
     }
 }
