@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class ChatGroupRepository
 {
-    public function createOneByOneGroup(User $creator, User $secondUser): ChatGroup|null
+    public function createFaceToFaceeGroup(User $creator, User $secondUser): ChatGroup|null
     {
-        $newChatGroup = $this->getOneByOneGroup($creator, $secondUser);
+        $newChatGroup = $this->getFaceToFaceeGroup($creator, $secondUser);
         if ($newChatGroup)
             return $newChatGroup;
         DB::beginTransaction();
@@ -32,7 +32,7 @@ class ChatGroupRepository
         return $newChatGroup;
     }
 
-    public function getOneByOneGroup(User $creator, User $secondUser): ChatGroup|null
+    public function getFaceToFaceeGroup(User $creator, User $secondUser): ChatGroup|null
     {
         $newChatGroup = ChatGroup::orWhere(function ($query) use ($creator, $secondUser) {
             $query->where('name', $creator->id . '_' . $secondUser->id)
