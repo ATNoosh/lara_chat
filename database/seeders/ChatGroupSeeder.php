@@ -16,6 +16,6 @@ class ChatGroupSeeder extends Seeder
         ChatGroup::factory()
             ->count(100)
             ->hasChatMessages(50)
-            ->create;
+            ->create();
     }
 }

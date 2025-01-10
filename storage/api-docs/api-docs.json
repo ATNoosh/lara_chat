@@ -1,0 +1,37 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Documentation",
+        "description": "Swagger API documentation for Laravel application",
+        "version": "2.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Localhost API Server"
+        }
+    ],
+    "paths": {
+        "/api/example": {
+            "get": {
+                "tags": [
+                    "Example"
+                ],
+                "summary": "Example endpoint",
+                "description": "This is a simple example endpoint.",
+                "operationId": "76069c944e7eee3f9b0491d8640c9b79",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Example",
+            "description": "Example"
+        }
+    ]
+}

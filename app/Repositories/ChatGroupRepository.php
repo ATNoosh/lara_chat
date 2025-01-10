@@ -45,4 +45,24 @@ class ChatGroupRepository
 
         return $group;
     }
+
+    public function createGroup(User $creator, string $name)
+    {
+        DB::beginTransaction();
+        try {
+            $newChatGroup = ChatGroup::create(
+                [
+                    'name' => $name,
+                    'creator_id' => $creator->id
+                ]
+            );
+            $newChatGroup->members()->attach($creator->id);
+            DB::commit();
+            
+            return $newChatGroup;
+        } catch (Exception $exp) {
+            DB::rollBack();
+            return null;
+        }
+    }
 }
