@@ -29,7 +29,7 @@ class ChatMessageController extends Controller
      */
     public function store(StoreChatMessageRequest $request)
     {
-        //
+        ChatMessage::create($request->all());
     }
 
     /**

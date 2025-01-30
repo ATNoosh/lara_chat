@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ChatGroup;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreChatMessageRequest extends FormRequest
@@ -11,7 +12,7 @@ class StoreChatMessageRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user?->chat_groups?->where('group_id', $this->route('group_id'))?->exists() ?? false;
     }
 
     /**
@@ -22,7 +23,7 @@ class StoreChatMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'message' => ['required', 'string', 'min:1', 'max:10000']
         ];
     }
 }

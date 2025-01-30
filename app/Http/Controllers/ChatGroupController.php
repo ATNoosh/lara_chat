@@ -29,7 +29,7 @@ class ChatGroupController extends Controller
      */
     public function store(StoreChatGroupRequest $request)
     {
-        //
+        
     }
 
     /**

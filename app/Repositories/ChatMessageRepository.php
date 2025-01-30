@@ -25,6 +25,6 @@ class ChatMessageRepository
 
     public function getMessages(ChatGroup $chatGroup)
     {
-        
+        return $chatGroup->chatMessages;
     }
 }

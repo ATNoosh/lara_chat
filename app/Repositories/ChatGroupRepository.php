@@ -33,13 +33,13 @@ class ChatGroupRepository
         return $newChatGroup;
     }
 
-    public function getFaceToFaceeGroup(User $creator, User $secondUser): ChatGroup|null
+    public function getFaceToFaceeGroup(User $firstUser, User $secondUser): ChatGroup|null
     {
-        $group = ChatGroup::orWhere(function ($query) use ($creator, $secondUser) {
-            $query->where('name', $creator->id . '_' . $secondUser->id)
-                ->where('creator_id', $creator->id);
-        })->orWhere(function ($query) use ($creator, $secondUser) {
-            $query->where('name', $secondUser->id . '_' . $creator->id)
+        $group = ChatGroup::orWhere(function ($query) use ($firstUser, $secondUser) {
+            $query->where('name', $firstUser->id . '_' . $secondUser->id)
+                ->where('creator_id', $firstUser->id);
+        })->orWhere(function ($query) use ($firstUser, $secondUser) {
+            $query->where('name', $secondUser->id . '_' . $firstUser->id)
                 ->where('creator_id', $secondUser->id);
         })->first();
 
