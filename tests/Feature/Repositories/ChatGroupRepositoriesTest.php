@@ -19,7 +19,7 @@ class ChatGroupRepositoriesTest extends TestCase
         $secondUser = User::factory()->create();
 
         $repository = app(ChatGroupRepository::class);
-        return $repository->createFaceToFaceeGroup($creator, $secondUser);
+        return $repository->createFaceToFaceGroup($creator->id, $secondUser->id);
     }
     /**
      * A basic feature test example.
@@ -28,7 +28,7 @@ class ChatGroupRepositoriesTest extends TestCase
     {
         $newGroup = $this->createRandomFaceToFaceGroup();
         $this->assertModelExists($newGroup);
-        foreach($newGroup->members as $member)
+        foreach($newGroup->members ?? [] as $member)
         {
             $this->assertDatabaseHas(
                 ChatGroupMember::class,
@@ -38,7 +38,7 @@ class ChatGroupRepositoriesTest extends TestCase
                 ]
             );
         }
-        $this->assertEquals($newGroup->members->count(), 2);
+        $this->assertEquals($newGroup?->members?->count() ?? 0, 2);
     }
 
 }

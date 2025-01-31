@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreChatGroupRequest;
 use App\Http\Requests\UpdateChatGroupRequest;
 use App\Models\ChatGroup;
+use App\Repositories\ChatGroupRepository;
 
 class ChatGroupController extends Controller
 {
@@ -29,7 +30,7 @@ class ChatGroupController extends Controller
      */
     public function store(StoreChatGroupRequest $request)
     {
-        
+        app(ChatGroupRepository::class)->createFaceToFaceGroup($request->userId, $request->secondUser_id);
     }
 
     /**

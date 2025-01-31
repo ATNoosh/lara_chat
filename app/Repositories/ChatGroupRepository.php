@@ -2,30 +2,38 @@
 
 namespace App\Repositories;
 
+use App\Constants\AppConstants;
 use App\Models\ChatGroup;
 use App\Models\User;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class ChatGroupRepository
 {
-    public function createFaceToFaceeGroup(User $creator, User $secondUser): ChatGroup|null
+    public function createFaceToFaceGroup(...$userIds): ChatGroup|null
     {
-        $newChatGroup = $this->getFaceToFaceeGroup($creator, $secondUser);
+        $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
+        if (count($userIds) !== 2) {
+            throw new Exception('Face to face groups must have 2 members!');
+        }
+        $newChatGroup = $this->getFaceToFaceGroup($userIds);
         if ($newChatGroup) {
             return $newChatGroup;
         } else {
             DB::beginTransaction();
             try {
-                $newChatGroup = ChatGroup::create(
+                $newChatGroup = $this->createGroup(
                     [
-                        'name' => $creator->id . '_' . $secondUser->id,
-                        'creator_id' => $creator->id
+                        'creator_id' => $userIds[0],
+                        'type' => ChatGroup::TYPE_FACE_TO_FACE,
+                        'is_private' => true
                     ]
                 );
-                $newChatGroup->members()->attach([$creator->id, $secondUser->id]);
+                $this->addMembersToGroup($newChatGroup->id, $userIds);
             } catch (Exception $exp) {
-                DB::rollBack();
+                DB::rollBack();dd($exp);
                 return null;
             }
             DB::commit();
@@ -33,36 +41,42 @@ class ChatGroupRepository
         return $newChatGroup;
     }
 
-    public function getFaceToFaceeGroup(User $firstUser, User $secondUser): ChatGroup|null
+    public function getFaceToFaceGroup(...$userIds): ChatGroup|null
     {
-        $group = ChatGroup::orWhere(function ($query) use ($firstUser, $secondUser) {
-            $query->where('name', $firstUser->id . '_' . $secondUser->id)
-                ->where('creator_id', $firstUser->id);
-        })->orWhere(function ($query) use ($firstUser, $secondUser) {
-            $query->where('name', $secondUser->id . '_' . $firstUser->id)
-                ->where('creator_id', $secondUser->id);
+        $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
+
+        $group = ChatGroup::faceToFace()->whereHas('members', function (Builder $query) use ($userIds) {
+            $query->whereIn('user_id', $userIds);
         })->first();
 
         return $group;
     }
 
-    public function createGroup(User $creator, string $name)
+    public function createGroup(array $groupData): ChatGroup|null
     {
-        DB::beginTransaction();
-        try {
-            $newChatGroup = ChatGroup::create(
-                [
-                    'name' => $name,
-                    'creator_id' => $creator->id
-                ]
-            );
-            $newChatGroup->members()->attach($creator->id);
-            DB::commit();
-            
-            return $newChatGroup;
-        } catch (Exception $exp) {
-            DB::rollBack();
-            return null;
+        $newChatGroup = ChatGroup::create(
+            [
+                'name' => $groupData['name'] ?? AppConstants::NEW_GROUP_NAME,
+                'creator_id' => $groupData['creator_id'] ?? 0,
+                'is_private' => $groupData['is_private'] ?? false,
+                'type' => $groupData['type'] ?? ChatGroup::TYPE_SIMPLE,
+            ]
+        );
+        
+        return $newChatGroup;
+    }
+
+    public function addMembersToGroup(int $groupId, ...$userIds)
+    {
+        $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
+
+        $group = ChatGroup::find($groupId);
+        if (!$group) {
+            throw new Exception('Group not found!');
         }
+
+        $result = $group->members()->syncWithoutDetaching($userIds);
+
+        return $result['attached'];
     }
 }
