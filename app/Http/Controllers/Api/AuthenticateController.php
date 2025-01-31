@@ -23,10 +23,10 @@ class AuthenticateController extends Controller
             ], 401);
         }
         $token = $user->createToken($user->name . '-AuthToken')->plainTextToken;
-dd($token);
-        return $this->success(__('User loggined successfully!', [
+
+        return $this->success(__('User loggined successfully!'), [
             'access_token' => $token,
-        ]));
+        ]);
     }
 
     public function register()

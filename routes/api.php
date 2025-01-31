@@ -11,5 +11,5 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/auth/login', [AuthenticateController::class, 'login']);
-Route::post('chat_group', [ChatGroupController::class, 'store'])->name('chat_group.store');
+Route::post('chat_group', [ChatGroupController::class, 'store'])->name('chat_group.store')->middleware('auth:sanctum');
 Route::post('chat_group/{group_id}/message', [ChatMessageController::class, 'store'])->name('chat_group.message.store');

@@ -30,7 +30,7 @@ class ChatGroupController extends Controller
      */
     public function store(StoreChatGroupRequest $request)
     {
-        app(ChatGroupRepository::class)->createFaceToFaceGroup($request->userId, $request->secondUser_id);
+        app(ChatGroupRepository::class)->createFaceToFaceGroup(auth()->id, $request->secondUserId);
     }
 
     /**
