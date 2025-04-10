@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreChatMessageRequest;
 use App\Http\Requests\UpdateChatMessageRequest;
 use App\Models\ChatMessage;
+use App\Repositories\ChatMessageRepository;
 
 class ChatMessageController extends Controller
 {
@@ -29,7 +30,7 @@ class ChatMessageController extends Controller
      */
     public function store(StoreChatMessageRequest $request)
     {
-        ChatMessage::create($request->all());
+        app(ChatMessageRepository::class)->sendMessage($request->all());
     }
 
     /**
