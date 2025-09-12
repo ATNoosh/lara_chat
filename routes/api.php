@@ -10,6 +10,32 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Authentication routes
 Route::post('/auth/login', [AuthenticateController::class, 'login']);
-Route::post('chat_group', [ChatGroupController::class, 'store'])->name('chat_group.store')->middleware('auth:sanctum');
-Route::post('chat_group/{group_id}/message', [ChatMessageController::class, 'store'])->name('chat_group.message.store');
+Route::post('/auth/register', [AuthenticateController::class, 'register']);
+
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Users routes
+    Route::get('users', function () {
+        $users = \App\Models\User::where('id', '!=', auth()->id())->select('id', 'name', 'email')->get();
+        return response()->json([
+            'success' => true,
+            'data' => $users
+        ]);
+    });
+    
+    // Chat Group routes
+    Route::get('chat_groups', [ChatGroupController::class, 'index'])->name('chat_groups.index');
+    Route::post('chat_groups', [ChatGroupController::class, 'store'])->name('chat_groups.store');
+    Route::get('chat_groups/{chatGroup}', [ChatGroupController::class, 'show'])->name('chat_groups.show');
+    Route::put('chat_groups/{chatGroup}', [ChatGroupController::class, 'update'])->name('chat_groups.update');
+    Route::delete('chat_groups/{chatGroup}', [ChatGroupController::class, 'destroy'])->name('chat_groups.destroy');
+    
+    // Chat Message routes
+    Route::get('chat_groups/{groupId}/messages', [ChatMessageController::class, 'index'])->name('chat_messages.index');
+    Route::post('chat_groups/{group_id}/messages', [ChatMessageController::class, 'store'])->name('chat_messages.store');
+    Route::get('chat_messages/{chatMessage}', [ChatMessageController::class, 'show'])->name('chat_messages.show');
+    Route::put('chat_messages/{chatMessage}', [ChatMessageController::class, 'update'])->name('chat_messages.update');
+    Route::delete('chat_messages/{chatMessage}', [ChatMessageController::class, 'destroy'])->name('chat_messages.destroy');
+});

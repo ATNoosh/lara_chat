@@ -29,8 +29,17 @@ class AuthenticateController extends Controller
         ]);
     }
 
-    public function register()
+    public function register(\App\Http\Requests\Api\Auth\RegisterRequest $request): Response
     {
+        $userData = $request->validated();
+        $userData['password'] = Hash::make($userData['password']);
         
+        $user = User::create($userData);
+        $token = $user->createToken($user->name . '-AuthToken')->plainTextToken;
+
+        return $this->success(__('User registered successfully!'), [
+            'access_token' => $token,
+            'user' => $user
+        ], 201);
     }
 }

@@ -22,9 +22,11 @@ class StoreChatGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => [
+            'secondUserId' => [
                 'required',
-                'min:1',
+                'integer',
+                'exists:users,id',
+                'different:' . auth()->id()
             ],
         ];
     }
