@@ -188,6 +188,8 @@ const showCreateGroupModal = ref(false)
 const selectedUserId = ref('')
 const availableUsers = ref([])
 const messagesContainer = ref(null)
+let currentChannel = null
+let currentChannelGroupId = null
 
 // Load user data
 const loadUser = async () => {
@@ -279,11 +281,25 @@ const createChatGroup = async () => {
 // Setup Echo listener for real-time messages
 const setupEchoListener = (groupId) => {
     if (window.Echo) {
-        window.Echo.private(`chat.${groupId}`)
+        // Avoid duplicate listeners by leaving previous channel
+        if (currentChannel && currentChannelGroupId && currentChannelGroupId !== groupId) {
+            window.Echo.leave(`chat.${currentChannelGroupId}`)
+            currentChannel = null
+            currentChannelGroupId = null
+        }
+
+        if (currentChannelGroupId === groupId && currentChannel) {
+            return
+        }
+
+        currentChannel = window.Echo
+            .private(`chat.${groupId}`)
+            .stopListening('MessageSent')
             .listen('MessageSent', (e) => {
                 messages.value.push(e.message)
                 nextTick(() => scrollToBottom())
             })
+        currentChannelGroupId = groupId
     }
 }
 
@@ -301,19 +317,24 @@ const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-// Scroll to bottom
+// Scroll to bottom (robust + smooth)
 const scrollToBottom = () => {
-    if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
+    const el = messagesContainer.value
+    if (!el) return
+    // Use double rAF to ensure layout is settled, then smooth scroll
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (typeof el.scrollTo === 'function') {
+                el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+            } else {
+                el.scrollTop = el.scrollHeight
+            }
+        })
+    })
 }
 
 // Watch for selected group changes
-watch(selectedGroup, () => {
-    if (selectedGroup.value) {
-        setupEchoListener(selectedGroup.value.id)
-    }
-})
+// Removed watcher re-subscribing to prevent duplicate listeners
 
 onMounted(async () => {
     await loadUser()

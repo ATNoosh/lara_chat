@@ -1,7 +1,7 @@
 import './bootstrap';
 
 import { createApp, h } from 'vue'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, RouterView } from 'vue-router'
 import ChatApp from './Pages/Chat/ChatApp.vue'
 import Login from './Pages/Auth/Login.vue'
 import Register from './Pages/Auth/Register.vue'
@@ -39,9 +39,13 @@ router.beforeEach((to, from, next) => {
     }
 })
 
+router.afterEach((to) => {
+    console.log('[Debug] Navigated to route:', to.fullPath)
+})
+
 // Create Vue app with render function (no runtime template compilation)
 const app = createApp({
-    render: () => h('router-view')
+    render: () => h(RouterView)
 })
 
 // Add error handling

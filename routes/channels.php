@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Broadcast;
 
+// Register broadcasting auth route; keep 'web' and add Sanctum token guard
+Broadcast::routes(['middleware' => ['web', 'auth:sanctum']]);
+
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });

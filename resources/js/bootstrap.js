@@ -10,3 +10,20 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
  */
 
 import './echo';
+
+// Ensure sender does not receive their own broadcast when using toOthers()
+// by attaching the current socket ID to outgoing requests
+axios.interceptors.request.use((config) => {
+    try {
+        if (window.Echo && typeof window.Echo.socketId === 'function') {
+            const socketId = window.Echo.socketId();
+            if (socketId) {
+                config.headers = config.headers || {};
+                config.headers['X-Socket-Id'] = socketId;
+            }
+        }
+    } catch (e) {
+        // no-op
+    }
+    return config;
+});

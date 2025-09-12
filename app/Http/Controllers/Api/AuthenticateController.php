@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Auth\LoginRequest;
+use App\Http\Requests\Api\Auth\RegisterRequest;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class AuthenticateController extends Controller
         ]);
     }
 
-    public function register(\App\Http\Requests\Api\Auth\RegisterRequest $request): Response
+    public function register(RegisterRequest $request): Response
     {
         $userData = $request->validated();
         $userData['password'] = Hash::make($userData['password']);

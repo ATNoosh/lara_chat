@@ -2,6 +2,9 @@
     <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <div>
+                <div style="padding:8px;border:1px dashed #999;background:#fffbe6;color:#555;text-align:center;margin-bottom:8px;">
+                    [Debug] Login component rendered
+                </div>
                 <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     Sign in to your account
                 </h2>
@@ -62,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -74,6 +77,10 @@ const showRegister = ref(false)
 const form = reactive({
     email: '',
     password: ''
+})
+
+onMounted(() => {
+    console.log('[Debug] Login.vue mounted')
 })
 
 const login = async () => {
