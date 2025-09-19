@@ -7,7 +7,7 @@ import Login from './Pages/Auth/Login.vue'
 import Register from './Pages/Auth/Register.vue'
 import axios from 'axios'
 
-// Set up axios defaults
+// Set up axios defaults (bootstrap.js already handles this, but ensure it's set)
 const token = localStorage.getItem('token')
 if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`

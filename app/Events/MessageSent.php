@@ -20,7 +20,7 @@ class MessageSent implements ShouldBroadcastNow
      */
     public function __construct(ChatMessage $message)
     {
-        $this->message = $message->load('sender');
+        $this->message = $message->load(['sender', 'chatGroup']);
     }
 
     /**
@@ -31,7 +31,7 @@ class MessageSent implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('chat.' . $this->message->chat_group_id),
+            new PrivateChannel('chat.' . $this->message->chatGroup->uuid),
         ];
     }
 

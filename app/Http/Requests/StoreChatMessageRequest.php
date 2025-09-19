@@ -12,13 +12,13 @@ class StoreChatMessageRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        $groupId = $this->route('group_id');
+        $chatGroup = $this->route('chatGroup'); // bound via {chatGroup:uuid}
 
-        if (!$user || !$groupId) {
+        if (! $user || ! $chatGroup) {
             return false;
         }
 
-        return $user->chatGroups()->where('chat_groups.id', $groupId)->exists();
+        return $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists();
     }
 
     /**

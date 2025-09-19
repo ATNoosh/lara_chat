@@ -7,7 +7,7 @@
                 </h2>
                 <p class="mt-2 text-center text-sm text-gray-600">
                     Or
-                    <a href="#" @click="showLogin = true" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    <a href="#" @click="goToLogin" class="font-medium text-indigo-600 hover:text-indigo-500">
                         sign in to existing account
                     </a>
                 </p>
@@ -100,6 +100,10 @@ const form = reactive({
     password: '',
     password_confirmation: ''
 })
+
+const goToLogin = () => {
+    router.push('/login')
+}
 
 const register = async () => {
     loading.value = true

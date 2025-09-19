@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-100">
+    <div class="h-screen overflow-hidden bg-gray-100">
         <div class="flex h-screen">
             <!-- Sidebar -->
             <div class="w-1/3 bg-white border-r border-gray-200">
@@ -50,8 +50,8 @@
             </div>
             
             <!-- Chat Area -->
-            <div class="flex-1 flex flex-col">
-                <div v-if="selectedGroup" class="flex-1 flex flex-col">
+            <div class="flex-1 flex flex-col min-h-0">
+                <div v-if="selectedGroup" class="flex-1 flex flex-col min-h-0">
                     <!-- Chat Header -->
                     <div class="bg-white border-b border-gray-200 p-4">
                         <div class="flex items-center space-x-3">
@@ -72,7 +72,7 @@
                     </div>
                     
                     <!-- Messages -->
-                    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" @scroll="onMessagesScroll">
                         <div 
                             v-for="message in messages" 
                             :key="message.id"
@@ -102,8 +102,8 @@
                         </div>
                     </div>
                     
-                    <!-- Message Input -->
-                    <div class="bg-white border-t border-gray-200 p-4">
+                    <!-- Message Input (sticky bottom) -->
+                    <div class="bg-white border-t border-gray-200 p-4 sticky bottom-0">
                         <form @submit.prevent="sendMessage" class="flex space-x-2">
                             <input
                                 v-model="newMessage"
@@ -190,6 +190,7 @@ const availableUsers = ref([])
 const messagesContainer = ref(null)
 let currentChannel = null
 let currentChannelGroupId = null
+const isUserNearBottom = ref(true)
 
 // Load user data
 const loadUser = async () => {
@@ -224,14 +225,14 @@ const loadAvailableUsers = async () => {
 // Select chat group
 const selectChatGroup = async (group) => {
     selectedGroup.value = group
-    await loadMessages(group.id)
-    setupEchoListener(group.id)
+    await loadMessages(group.uuid)
+    setupEchoListener(group.uuid)
 }
 
 // Load messages for selected group
-const loadMessages = async (groupId) => {
+const loadMessages = async (groupUuid) => {
     try {
-        const response = await axios.get(`/api/chat_groups/${groupId}/messages`)
+        const response = await axios.get(`/api/chat_groups/${groupUuid}/messages`)
         messages.value = response.data.data
         await nextTick()
         scrollToBottom()
@@ -245,7 +246,7 @@ const sendMessage = async () => {
     if (!newMessage.value.trim() || !selectedGroup.value) return
     
     try {
-        const response = await axios.post(`/api/chat_groups/${selectedGroup.value.id}/messages`, {
+        const response = await axios.post(`/api/chat_groups/${selectedGroup.value.uuid}/messages`, {
             message: newMessage.value
         })
         
@@ -271,35 +272,39 @@ const createChatGroup = async () => {
         selectedGroup.value = response.data.data
         showCreateGroupModal.value = false
         selectedUserId.value = ''
-        await loadMessages(response.data.data.id)
-        setupEchoListener(response.data.data.id)
+        await loadMessages(response.data.data.uuid)
+        setupEchoListener(response.data.data.uuid)
     } catch (error) {
         console.error('Error creating chat group:', error)
     }
 }
 
 // Setup Echo listener for real-time messages
-const setupEchoListener = (groupId) => {
+const setupEchoListener = (groupUuid) => {
     if (window.Echo) {
         // Avoid duplicate listeners by leaving previous channel
-        if (currentChannel && currentChannelGroupId && currentChannelGroupId !== groupId) {
+        if (currentChannel && currentChannelGroupId && currentChannelGroupId !== groupUuid) {
             window.Echo.leave(`chat.${currentChannelGroupId}`)
             currentChannel = null
             currentChannelGroupId = null
         }
 
-        if (currentChannelGroupId === groupId && currentChannel) {
+        if (currentChannelGroupId === groupUuid && currentChannel) {
             return
         }
 
         currentChannel = window.Echo
-            .private(`chat.${groupId}`)
+            .private(`chat.${groupUuid}`)
             .stopListening('MessageSent')
             .listen('MessageSent', (e) => {
                 messages.value.push(e.message)
-                nextTick(() => scrollToBottom())
+                nextTick(() => {
+                    if (isUserNearBottom.value) {
+                        scrollToBottom()
+                    }
+                })
             })
-        currentChannelGroupId = groupId
+        currentChannelGroupId = groupUuid
     }
 }
 
@@ -331,6 +336,14 @@ const scrollToBottom = () => {
             }
         })
     })
+}
+
+// Track if user is near the bottom to avoid forcing scroll while reading older messages
+const onMessagesScroll = () => {
+    const el = messagesContainer.value
+    if (!el) return
+    const threshold = 80 // px from bottom considered as near bottom
+    isUserNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < threshold
 }
 
 // Watch for selected group changes

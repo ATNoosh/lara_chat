@@ -10,7 +10,7 @@
                 </h2>
                 <p class="mt-2 text-center text-sm text-gray-600">
                     Or
-                    <a href="#" @click="showRegister = true" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    <a href="#" @click="goToRegister" class="font-medium text-indigo-600 hover:text-indigo-500">
                         create a new account
                     </a>
                 </p>
@@ -82,6 +82,10 @@ const form = reactive({
 onMounted(() => {
     console.log('[Debug] Login.vue mounted')
 })
+
+const goToRegister = () => {
+    router.push('/register')
+}
 
 const login = async () => {
     loading.value = true

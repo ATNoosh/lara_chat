@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('chat_groups', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->string('name')->nullable(true)->default(AppConstants::NEW_GROUP_NAME);
             $table->unsignedBigInteger('creator_id')->nullable(true)->default(0);
             $table->enum('type', ChatGroup::TYPES)->default(ChatGroup::TYPE_SIMPLE);

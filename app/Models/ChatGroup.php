@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class ChatGroup extends Model
 {
@@ -17,7 +18,28 @@ class ChatGroup extends Model
     /** @use HasFactory<\Database\Factories\ChatGroupFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'creator_id', 'is_private', 'type'];
+    protected $fillable = ['name', 'creator_id', 'is_private', 'type', 'uuid'];
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where($field ?? $this->getRouteKeyName(), $value)->first();
+    }
 
     public function scopeSimple(Builder $query): void
     {

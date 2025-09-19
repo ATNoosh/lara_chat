@@ -12,10 +12,9 @@ class ChatMessageController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index($groupId)
+    public function index(\App\Models\ChatGroup $chatGroup)
     {
         try {
-            $chatGroup = \App\Models\ChatGroup::findOrFail($groupId);
             $user = auth()->user();
             
             // Check if user is member of this group
@@ -51,10 +50,9 @@ class ChatMessageController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreChatMessageRequest $request)
+    public function store(StoreChatMessageRequest $request, \App\Models\ChatGroup $chatGroup)
     {
         try {
-            $chatGroup = \App\Models\ChatGroup::findOrFail($request->route('group_id'));
             $user = auth()->user();
             
             // Check if user is member of this group

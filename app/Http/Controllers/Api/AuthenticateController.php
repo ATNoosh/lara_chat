@@ -19,7 +19,7 @@ class AuthenticateController extends Controller
         $loginUserData = $loginRequest->validated();
         $user = User::where('email', $loginUserData['email'])->first();
         if (!$user || !Hash::check($loginUserData['password'], $user->password)) {
-            return response()->json([
+            return $this->failure([
                 'message' => 'Invalid Credentials'
             ], 401);
         }
