@@ -22,12 +22,26 @@ class StoreChatGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Face-to-face mode
             'secondUserId' => [
-                'required',
+                'required_without:memberIds',
+                'nullable',
                 'integer',
                 'exists:users,id',
                 'different:' . auth()->id()
             ],
+            // Group mode
+            'memberIds' => [
+                'required_without:secondUserId',
+                'nullable',
+                'array',
+            ],
+            'memberIds.*' => [
+                'integer',
+                'exists:users,id',
+                'different:' . auth()->id()
+            ],
+            'name' => ['nullable', 'string', 'max:255']
         ];
     }
 }

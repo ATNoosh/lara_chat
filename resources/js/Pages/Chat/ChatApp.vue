@@ -4,9 +4,14 @@
             <!-- Sidebar -->
             <div class="w-1/3 bg-white border-r border-gray-200">
                 <div class="p-4 border-b border-gray-200">
-                    <h1 class="text-xl font-semibold text-gray-800">Chat App</h1>
-                    <div class="mt-2 text-sm text-gray-600">
-                        Welcome, {{ user.name }}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-xl font-semibold text-gray-800">Chat App</h1>
+                            <div class="mt-1 text-sm text-gray-600">Welcome, {{ user.name }}</div>
+                        </div>
+                        <button @click="logout" class="ml-3 text-sm text-red-600 hover:text-red-700 border border-red-200 px-3 py-1 rounded-md">
+                            Logout
+                        </button>
                     </div>
                 </div>
                 
@@ -17,6 +22,12 @@
                         class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                     >
                         Start New Chat
+                    </button>
+                    <button 
+                        @click="showCreateMultiGroupModal = true"
+                        class="w-full mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        New Group Chat
                     </button>
                 </div>
                 
@@ -133,7 +144,7 @@
             </div>
         </div>
         
-        <!-- Create Group Modal -->
+        <!-- Create Group Modal (Face to Face) -->
         <div v-if="showCreateGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 w-96">
                 <h3 class="text-lg font-semibold mb-4">Start New Chat</h3>
@@ -171,6 +182,40 @@
                 </form>
             </div>
         </div>
+
+        <!-- Create Multi-User Group Modal -->
+        <div v-if="showCreateMultiGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 w-[30rem]">
+                <h3 class="text-lg font-semibold mb-4">Create Group Chat</h3>
+                <form @submit.prevent="createMultiUserGroup">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Group Name (optional)
+                        </label>
+                        <input v-model="newGroupName" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Awesome Group" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Members
+                        </label>
+                        <div class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+                            <div v-for="u in availableUsers" :key="u.id" class="flex items-center px-3 py-2 border-b last:border-b-0">
+                                <input type="checkbox" class="mr-3" :value="u.id" v-model="selectedMemberIds" />
+                                <div class="text-sm">
+                                    <div class="text-gray-900">{{ u.name }}</div>
+                                    <div class="text-gray-500">{{ u.email }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">You will be added automatically.</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button type="button" @click="showCreateMultiGroupModal = false" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                        <button type="submit" :disabled="selectedMemberIds.length === 0" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50">Create Group</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -185,12 +230,29 @@ const selectedGroup = ref(null)
 const messages = ref([])
 const newMessage = ref('')
 const showCreateGroupModal = ref(false)
+const showCreateMultiGroupModal = ref(false)
 const selectedUserId = ref('')
+const selectedMemberIds = ref([])
+const newGroupName = ref('')
 const availableUsers = ref([])
 const messagesContainer = ref(null)
 let currentChannel = null
 let currentChannelGroupId = null
 const isUserNearBottom = ref(true)
+
+// Logout: clear token, disconnect Echo, redirect to login
+const logout = () => {
+    try {
+        localStorage.removeItem('token')
+        if (axios?.defaults?.headers?.common) {
+            delete axios.defaults.headers.common['Authorization']
+        }
+        if (window.Echo) {
+            try { window.Echo.disconnect() } catch (e) {}
+        }
+    } catch (e) {}
+    window.location.href = '/login'
+}
 
 // Load user data
 const loadUser = async () => {
@@ -279,6 +341,27 @@ const createChatGroup = async () => {
     }
 }
 
+// Create multi-user chat group
+const createMultiUserGroup = async () => {
+    if (selectedMemberIds.value.length === 0) return
+    try {
+        const response = await axios.post('/api/chat_groups', {
+            name: newGroupName.value || undefined,
+            memberIds: selectedMemberIds.value,
+        })
+
+        chatGroups.value.push(response.data.data)
+        selectedGroup.value = response.data.data
+        showCreateMultiGroupModal.value = false
+        selectedMemberIds.value = []
+        newGroupName.value = ''
+        await loadMessages(response.data.data.uuid)
+        setupEchoListener(response.data.data.uuid)
+    } catch (error) {
+        console.error('Error creating multi-user chat group:', error)
+    }
+}
+
 // Setup Echo listener for real-time messages
 const setupEchoListener = (groupUuid) => {
     if (window.Echo) {
@@ -314,7 +397,10 @@ const getGroupName = (group) => {
         const otherMember = group.members?.find(member => member.id !== user.value.id)
         return otherMember ? otherMember.name : 'Unknown User'
     }
-    return group.name || 'Group Chat'
+    if (group.name) return group.name
+    // Compose from first few members
+    const names = (group.members || []).map(m => m.name).filter(Boolean)
+    return names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? '…' : '') : 'Group Chat'
 }
 
 // Format time

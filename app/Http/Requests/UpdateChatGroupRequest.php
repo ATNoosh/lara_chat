@@ -11,7 +11,15 @@ class UpdateChatGroupRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        $user = $this->user();
+        $chatGroup = $this->route('chatGroup'); // {chatGroup:uuid}
+
+        if (! $user || ! $chatGroup) {
+            return false;
+        }
+
+        // Only the creator can update the group
+        return (int) $chatGroup->creator_id === (int) $user->id;
     }
 
     /**
@@ -22,7 +30,9 @@ class UpdateChatGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => ['nullable', 'string', 'max:255'],
+            'memberIds' => ['nullable', 'array'],
+            'memberIds.*' => ['integer', 'exists:users,id'],
         ];
     }
 }

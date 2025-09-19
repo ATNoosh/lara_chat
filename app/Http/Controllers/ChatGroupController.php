@@ -39,7 +39,15 @@ class ChatGroupController extends Controller
     public function store(StoreChatGroupRequest $request)
     {
         try {
-            $chatGroup = app(ChatGroupRepository::class)->createFaceToFaceGroup(auth()->id(), $request->secondUserId);
+            if ($request->filled('memberIds')) {
+                $chatGroup = app(ChatGroupRepository::class)->createGroupWithMembers(
+                    auth()->id(),
+                    $request->memberIds,
+                    ['name' => $request->input('name'), 'type' => ChatGroup::TYPE_SIMPLE]
+                );
+            } else {
+                $chatGroup = app(ChatGroupRepository::class)->createFaceToFaceGroup(auth()->id(), $request->secondUserId);
+            }
             
             return response()->json([
                 'success' => true,
@@ -90,7 +98,30 @@ class ChatGroupController extends Controller
      */
     public function update(UpdateChatGroupRequest $request, ChatGroup $chatGroup)
     {
-        //
+        try {
+            if ($request->filled('name')) {
+                $chatGroup->name = $request->input('name');
+                $chatGroup->save();
+            }
+
+            if ($request->filled('memberIds')) {
+                // Ensure creator is always included
+                $memberIds = array_unique(array_merge([$chatGroup->creator_id], $request->memberIds));
+                app(ChatGroupRepository::class)->setGroupMembers($chatGroup->id, $memberIds);
+                $chatGroup->load('members');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Chat group updated successfully',
+                'data' => $chatGroup->load(['members', 'creator'])
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     /**

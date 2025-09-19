@@ -66,6 +66,29 @@ class ChatGroupRepository
         return $newChatGroup;
     }
 
+    public function createGroupWithMembers(int $creatorId, array $memberIds, array $groupData = []): ChatGroup
+    {
+        DB::beginTransaction();
+        try {
+            $group = $this->createGroup([
+                'name' => $groupData['name'] ?? AppConstants::NEW_GROUP_NAME,
+                'creator_id' => $creatorId,
+                'is_private' => $groupData['is_private'] ?? false,
+                'type' => $groupData['type'] ?? ChatGroup::TYPE_SIMPLE,
+            ]);
+
+            // Ensure creator is included
+            $allMemberIds = array_unique(array_merge([$creatorId], $memberIds));
+            $this->addMembersToGroup($group->id, $allMemberIds);
+
+            DB::commit();
+            return $group;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
     public function addMembersToGroup(int $groupId, ...$userIds)
     {
         $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
@@ -77,6 +100,13 @@ class ChatGroupRepository
 
         $result = $group->members()->syncWithoutDetaching($userIds);
 
+        return $result['attached'];
+    }
+
+    public function setGroupMembers(int $groupId, array $userIds): array
+    {
+        $group = ChatGroup::findOrFail($groupId);
+        $result = $group->members()->sync($userIds);
         return $result['attached'];
     }
 }
