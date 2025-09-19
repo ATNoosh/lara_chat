@@ -118,6 +118,11 @@ const register = async () => {
         // Set default authorization header
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.data.access_token}`
         
+        // Reinitialize Echo with new token
+        if (window.initializeEcho) {
+            window.initializeEcho()
+        }
+        
         // Redirect to chat
         router.push('/chat')
     } catch (err) {

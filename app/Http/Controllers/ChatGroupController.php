@@ -45,8 +45,16 @@ class ChatGroupController extends Controller
                     $request->memberIds,
                     ['name' => $request->input('name'), 'type' => ChatGroup::TYPE_SIMPLE]
                 );
+                // Notify all members about the new group
+                foreach ($chatGroup->members as $member) {
+                    event(new \App\Events\GroupAdded($chatGroup, $member->id));
+                }
             } else {
                 $chatGroup = app(ChatGroupRepository::class)->createFaceToFaceGroup(auth()->id(), $request->secondUserId);
+                // Notify both participants
+                foreach ($chatGroup->members as $member) {
+                    event(new \App\Events\GroupAdded($chatGroup, $member->id));
+                }
             }
             
             return response()->json([

@@ -335,7 +335,9 @@ const createChatGroup = async () => {
         showCreateGroupModal.value = false
         selectedUserId.value = ''
         await loadMessages(response.data.data.uuid)
-        setupEchoListener(response.data.data.uuid)
+        // Wait a bit for Echo to be ready, then setup listener
+        await nextTick()
+        setTimeout(() => setupEchoListener(response.data.data.uuid), 100)
     } catch (error) {
         console.error('Error creating chat group:', error)
     }
@@ -356,7 +358,9 @@ const createMultiUserGroup = async () => {
         selectedMemberIds.value = []
         newGroupName.value = ''
         await loadMessages(response.data.data.uuid)
-        setupEchoListener(response.data.data.uuid)
+        // Wait a bit for Echo to be ready, then setup listener
+        await nextTick()
+        setTimeout(() => setupEchoListener(response.data.data.uuid), 100)
     } catch (error) {
         console.error('Error creating multi-user chat group:', error)
     }
@@ -364,18 +368,24 @@ const createMultiUserGroup = async () => {
 
 // Setup Echo listener for real-time messages
 const setupEchoListener = (groupUuid) => {
-    if (window.Echo) {
-        // Avoid duplicate listeners by leaving previous channel
-        if (currentChannel && currentChannelGroupId && currentChannelGroupId !== groupUuid) {
-            window.Echo.leave(`chat.${currentChannelGroupId}`)
-            currentChannel = null
-            currentChannelGroupId = null
-        }
+    if (!window.Echo) {
+        console.warn('Echo not available, retrying in 500ms...')
+        setTimeout(() => setupEchoListener(groupUuid), 500)
+        return
+    }
 
-        if (currentChannelGroupId === groupUuid && currentChannel) {
-            return
-        }
+    // Avoid duplicate listeners by leaving previous channel
+    if (currentChannel && currentChannelGroupId && currentChannelGroupId !== groupUuid) {
+        window.Echo.leave(`chat.${currentChannelGroupId}`)
+        currentChannel = null
+        currentChannelGroupId = null
+    }
 
+    if (currentChannelGroupId === groupUuid && currentChannel) {
+        return
+    }
+
+    try {
         currentChannel = window.Echo
             .private(`chat.${groupUuid}`)
             .stopListening('MessageSent')
@@ -388,6 +398,9 @@ const setupEchoListener = (groupUuid) => {
                 })
             })
         currentChannelGroupId = groupUuid
+        console.log(`Echo listener setup for chat.${groupUuid}`)
+    } catch (error) {
+        console.error('Failed to setup Echo listener:', error)
     }
 }
 
@@ -439,6 +452,17 @@ onMounted(async () => {
     await loadUser()
     await loadChatGroups()
     await loadAvailableUsers()
+    // Subscribe to current user's private channel for group additions
+    if (window.Echo && user.value?.id) {
+        window.Echo.private(`App.Models.User.${user.value.id}`)
+            .stopListening('GroupAdded')
+            .listen('GroupAdded', (e) => {
+                // Avoid duplicates
+                if (!chatGroups.value.find(g => g.id === e.group.id)) {
+                    chatGroups.value.push(e.group)
+                }
+            })
+    }
 })
 </script>
 

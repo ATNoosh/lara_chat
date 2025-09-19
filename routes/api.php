@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Users routes
     Route::get('users', function () {
         $users = \App\Models\User::where('id', '!=', auth()->id())->select('id', 'name', 'email')->get();
+        
         return response()->json([
             'success' => true,
             'data' => $users
