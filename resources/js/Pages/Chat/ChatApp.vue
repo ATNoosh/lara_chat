@@ -1,34 +1,89 @@
 <template>
     <div class="h-screen overflow-hidden bg-gray-100">
-        <div class="flex h-screen">
+        <!-- Minimized Chat Button -->
+        <div v-if="isMinimized" class="fixed bottom-4 right-4 z-50">
+            <button 
+                @click="toggleMinimize"
+                class="bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                title="Open Chat"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Chat Window -->
+        <div v-else :class="['flex', isEmbedded ? 'h-full' : 'h-screen']">
             <!-- Sidebar -->
-            <div class="w-1/3 bg-white border-r border-gray-200">
+            <div :class="['bg-white border-r border-gray-200 transition-all duration-300', sidebarCollapsed ? 'w-16' : 'w-1/3']">
                 <div class="p-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <div>
+                        <div v-if="!sidebarCollapsed">
                             <h1 class="text-xl font-semibold text-gray-800">Chat App</h1>
                             <div class="mt-1 text-sm text-gray-600">Welcome, {{ user.name }}</div>
                         </div>
-                        <button @click="logout" class="ml-3 text-sm text-red-600 hover:text-red-700 border border-red-200 px-3 py-1 rounded-md">
-                            Logout
-                        </button>
+                        <div v-else class="flex items-center space-x-2">
+                            <button @click="toggleSidebar" class="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="Toggle Sidebar">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button v-if="!sidebarCollapsed" @click="toggleSidebar" class="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="Collapse Sidebar">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button @click="toggleMinimize" class="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="Minimize">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                </svg>
+                            </button>
+                            <button @click="logout" class="text-sm text-red-600 hover:text-red-700 border border-red-200 px-3 py-1 rounded-md">
+                                Logout
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Chat Groups List -->
                 <div class="p-4">
-                    <button 
-                        @click="showCreateGroupModal = true"
-                        class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                        Start New Chat
-                    </button>
-                    <button 
-                        @click="showCreateMultiGroupModal = true"
-                        class="w-full mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                        New Group Chat
-                    </button>
+                    <div v-if="!sidebarCollapsed">
+                        <button 
+                            @click="showCreateGroupModal = true"
+                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                            Start New Chat
+                        </button>
+                        <button 
+                            @click="showCreateMultiGroupModal = true"
+                            class="w-full mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                            New Group Chat
+                        </button>
+                    </div>
+                    <div v-else class="space-y-2">
+                        <button 
+                            @click="showCreateGroupModal = true"
+                            class="w-full bg-blue-500 text-white py-2 px-2 rounded-lg hover:bg-blue-600 transition-colors"
+                            title="Start New Chat"
+                        >
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                        </button>
+                        <button 
+                            @click="showCreateMultiGroupModal = true"
+                            class="w-full bg-green-600 text-white py-2 px-2 rounded-lg hover:bg-green-700 transition-colors"
+                            title="New Group Chat"
+                        >
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="overflow-y-auto">
@@ -37,11 +92,12 @@
                         :key="group.id"
                         @click="selectChatGroup(group)"
                         :class="[
-                            'p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50',
-                            selectedGroup?.id === group.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                            'cursor-pointer hover:bg-gray-50 transition-colors',
+                            selectedGroup?.id === group.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : '',
+                            sidebarCollapsed ? 'p-2' : 'p-4 border-b border-gray-100'
                         ]"
                     >
-                        <div class="flex items-center space-x-3">
+                        <div v-if="!sidebarCollapsed" class="flex items-center space-x-3">
                             <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                                 <span class="text-sm font-medium text-gray-600">
                                     {{ group.type === 'FACE_TO_FACE' ? '👤' : '👥' }}
@@ -54,6 +110,13 @@
                                 <div class="text-xs text-gray-500">
                                     {{ group.type === 'FACE_TO_FACE' ? 'Direct Message' : 'Group Chat' }}
                                 </div>
+                            </div>
+                        </div>
+                        <div v-else class="flex justify-center">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center" :title="getGroupName(group)">
+                                <span class="text-sm font-medium text-gray-600">
+                                    {{ group.type === 'FACE_TO_FACE' ? '👤' : '👥' }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -239,6 +302,19 @@ const messagesContainer = ref(null)
 let currentChannel = null
 let currentChannelGroupId = null
 const isUserNearBottom = ref(true)
+const isMinimized = ref(false)
+const isEmbedded = ref(false)
+const sidebarCollapsed = ref(false)
+
+// Toggle minimize/maximize
+const toggleMinimize = () => {
+    isMinimized.value = !isMinimized.value
+}
+
+// Toggle sidebar collapse
+const toggleSidebar = () => {
+    sidebarCollapsed.value = !sidebarCollapsed.value
+}
 
 // Logout: clear token, disconnect Echo, redirect to login
 const logout = () => {
@@ -449,6 +525,10 @@ const onMessagesScroll = () => {
 // Removed watcher re-subscribing to prevent duplicate listeners
 
 onMounted(async () => {
+    // Check if embedded mode (URL parameter or parent window)
+    isEmbedded.value = new URLSearchParams(window.location.search).get('embedded') === 'true' || 
+                      window.parent !== window
+    
     await loadUser()
     await loadChatGroups()
     await loadAvailableUsers()
