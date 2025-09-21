@@ -150,6 +150,7 @@
                         <div 
                             v-for="message in messages" 
                             :key="message.id"
+                            :ref="el => setMessageRef(el, message.id)"
                             :class="[
                                 'flex',
                                 message.sender_id === user.id ? 'justify-end' : 'justify-start'
@@ -166,11 +167,16 @@
                                 <div class="text-sm">{{ message.text }}</div>
                                 <div 
                                     :class="[
-                                        'text-xs mt-1',
+                                        'flex items-center justify-between mt-1',
                                         message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500'
                                     ]"
                                 >
-                                    {{ formatTime(message.created_at) }}
+                                    <span class="text-xs">{{ formatTime(message.created_at) }}</span>
+                                    <div v-if="message.sender_id === user.id" class="flex items-center space-x-1">
+                                        <span v-if="message.status === 'sent'" class="text-xs">✓</span>
+                                        <span v-else-if="message.status === 'delivered'" class="text-xs">✓✓</span>
+                                        <span v-else-if="message.status === 'read'" class="text-xs text-blue-200">✓✓</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -283,7 +289,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import axios from 'axios'
 import Echo from 'laravel-echo'
 
@@ -305,6 +311,10 @@ const isUserNearBottom = ref(true)
 const isMinimized = ref(false)
 const isEmbedded = ref(false)
 const sidebarCollapsed = ref(false)
+
+// Intersection Observer for auto-read messages
+const messageRefs = ref(new Map())
+let intersectionObserver = null
 
 // Toggle minimize/maximize
 const toggleMinimize = () => {
@@ -374,9 +384,94 @@ const loadMessages = async (groupUuid) => {
         messages.value = response.data.data
         await nextTick()
         scrollToBottom()
+        
+        // Setup intersection observer for auto-read messages
+        setupIntersectionObserver()
+        
+        // Mark messages as read when loading
+        markMessagesAsRead(groupUuid)
     } catch (error) {
         console.error('Error loading messages:', error)
     }
+}
+
+// Mark messages as read
+const markMessagesAsRead = async (groupUuid) => {
+    if (!groupUuid) return
+    
+    try {
+        await axios.post(`/api/chat_groups/${groupUuid}/messages/read`)
+    } catch (error) {
+        console.error('Error marking messages as read:', error)
+    }
+}
+
+// Mark single message as read
+const markMessageAsRead = async (messageId) => {
+    if (!selectedGroup.value?.uuid) return
+    
+    try {
+        await axios.post(`/api/chat_groups/${selectedGroup.value.uuid}/messages/${messageId}/read`)
+    } catch (error) {
+        console.error('Error marking message as read:', error)
+    }
+}
+
+// Set message ref for intersection observer
+const setMessageRef = (el, messageId) => {
+    if (el) {
+        messageRefs.value.set(messageId, el)
+    } else {
+        messageRefs.value.delete(messageId)
+    }
+}
+
+// Setup intersection observer for auto-read messages
+const setupIntersectionObserver = () => {
+    if (!('IntersectionObserver' in window)) {
+        console.warn('IntersectionObserver not supported')
+        return
+    }
+
+    // Clean up existing observer
+    if (intersectionObserver) {
+        intersectionObserver.disconnect()
+    }
+
+    intersectionObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const messageId = parseInt(entry.target.dataset.messageId)
+                    const message = messages.value.find(m => m.id === messageId)
+                    
+                    // Only mark as read if:
+                    // 1. Message is not from current user
+                    // 2. Message is not already read
+                    // 3. Message is not sent by current user
+                    if (message && message.sender_id !== user.value.id && message.status !== 'read') {
+                        markMessageAsRead(messageId)
+                        // Update local status immediately for better UX
+                        message.status = 'read'
+                        message.read_at = new Date().toISOString()
+                    }
+                }
+            })
+        },
+        {
+            root: messagesContainer.value,
+            rootMargin: '0px',
+            threshold: 0.5 // Message must be 50% visible
+        }
+    )
+
+    // Observe all message elements
+    messageRefs.value.forEach((el, messageId) => {
+        if (el && el.dataset) {
+            el.dataset.messageId = messageId
+            intersectionObserver.observe(el)
+        }
+    })
 }
 
 // Send message
@@ -462,7 +557,7 @@ const setupEchoListener = (groupUuid) => {
     }
 
     try {
-        currentChannel = window.Echo
+        currentChannel =         window.Echo
             .private(`chat.${groupUuid}`)
             .stopListening('MessageSent')
             .listen('MessageSent', (e) => {
@@ -470,6 +565,20 @@ const setupEchoListener = (groupUuid) => {
                 nextTick(() => {
                     if (isUserNearBottom.value) {
                         scrollToBottom()
+                    }
+                    // Setup intersection observer for new message
+                    setupIntersectionObserver()
+                })
+            })
+            .stopListening('MessagesRead')
+            .listen('MessagesRead', (e) => {
+                console.log('Messages read:', e)
+                // Update message statuses
+                e.messageIds.forEach(messageId => {
+                    const message = messages.value.find(m => m.id === messageId)
+                    if (message) {
+                        message.status = 'read'
+                        message.read_at = e.readAt
                     }
                 })
             })
@@ -542,6 +651,14 @@ onMounted(async () => {
                     chatGroups.value.push(e.group)
                 }
             })
+    }
+})
+
+onUnmounted(() => {
+    // Clean up intersection observer
+    if (intersectionObserver) {
+        intersectionObserver.disconnect()
+        intersectionObserver = null
     }
 })
 </script>

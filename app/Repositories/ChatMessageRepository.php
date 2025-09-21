@@ -16,7 +16,8 @@ class ChatMessageRepository
             [
                 'chat_group_id' => $group->id,
                 'sender_id' => $sender->id,
-                'text' => $messageText
+                'text' => $messageText,
+                'status' => ChatMessage::STATUS_SENT
             ]
         );
 
