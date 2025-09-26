@@ -6,6 +6,7 @@ use App\Http\Requests\StoreChatGroupRequest;
 use App\Http\Requests\UpdateChatGroupRequest;
 use App\Models\ChatGroup;
 use App\Repositories\ChatGroupRepository;
+use App\Events\GroupAdded;
 
 class ChatGroupController extends Controller
 {
@@ -47,13 +48,13 @@ class ChatGroupController extends Controller
                 );
                 // Notify all members about the new group
                 foreach ($chatGroup->members as $member) {
-                    event(new \App\Events\GroupAdded($chatGroup, $member->id));
+                    event(new GroupAdded($chatGroup, $member->id));
                 }
             } else {
                 $chatGroup = app(ChatGroupRepository::class)->createFaceToFaceGroup(auth()->id(), $request->secondUserId);
                 // Notify both participants
                 foreach ($chatGroup->members as $member) {
-                    event(new \App\Events\GroupAdded($chatGroup, $member->id));
+                    event(new GroupAdded($chatGroup, $member->id));
                 }
             }
 

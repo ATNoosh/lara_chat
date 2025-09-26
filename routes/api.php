@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthenticateController;
 use App\Http\Controllers\ChatGroupController;
 use App\Http\Controllers\ChatMessageController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +19,7 @@ Route::post('/auth/register', [AuthenticateController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
     // Users routes
     Route::get('users', function () {
-        $users = \App\Models\User::where('id', '!=', auth()->id())->select('id', 'name', 'email')->get();
+        $users = User::where('id', '!=', auth()->id())->select('id', 'name', 'email')->get();
 
         return response()->json([
             'success' => true,

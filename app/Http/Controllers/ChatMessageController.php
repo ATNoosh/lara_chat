@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreChatMessageRequest;
 use App\Http\Requests\UpdateChatMessageRequest;
 use App\Models\ChatMessage;
+use App\Models\ChatGroup;
+use Illuminate\Http\Request;
+use App\Events\MessageSent;
+use App\Events\MessagesRead;
+use App\Events\UserTyping;
 use App\Repositories\ChatMessageRepository;
 
 class ChatMessageController extends Controller
@@ -12,7 +17,7 @@ class ChatMessageController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(\App\Models\ChatGroup $chatGroup)
+    public function index(ChatGroup $chatGroup)
     {
         try {
             $user = auth()->user();
@@ -50,7 +55,7 @@ class ChatMessageController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreChatMessageRequest $request, \App\Models\ChatGroup $chatGroup)
+    public function store(StoreChatMessageRequest $request, ChatGroup $chatGroup)
     {
         try {
             $user = auth()->user();
@@ -66,7 +71,7 @@ class ChatMessageController extends Controller
             $message = app(ChatMessageRepository::class)->sendMessage($user, $chatGroup, $request->message);
 
             // Broadcast the message
-            broadcast(new \App\Events\MessageSent($message))->toOthers();
+            broadcast(new MessageSent($message))->toOthers();
 
             return response()->json([
                 'success' => true,
@@ -108,7 +113,7 @@ class ChatMessageController extends Controller
     /**
      * Mark messages as read
      */
-    public function markAsRead(\App\Models\ChatGroup $chatGroup)
+    public function markAsRead(ChatGroup $chatGroup)
     {
         try {
             $user = auth()->user();
@@ -132,7 +137,7 @@ class ChatMessageController extends Controller
             }
 
             // Broadcast read receipt event
-            broadcast(new \App\Events\MessagesRead($chatGroup, $user, $unreadMessages->pluck('id')->toArray()))->toOthers();
+            broadcast(new MessagesRead($chatGroup, $user, $unreadMessages->pluck('id')->toArray()))->toOthers();
 
             return response()->json([
                 'success' => true,
@@ -152,7 +157,7 @@ class ChatMessageController extends Controller
     /**
      * Mark a specific message as read
      */
-    public function markMessageAsRead(\App\Models\ChatGroup $chatGroup, ChatMessage $chatMessage)
+    public function markMessageAsRead(ChatGroup $chatGroup, ChatMessage $chatMessage)
     {
         try {
             $user = auth()->user();
@@ -178,7 +183,7 @@ class ChatMessageController extends Controller
                 $chatMessage->markAsRead();
 
                 // Broadcast read receipt event
-                broadcast(new \App\Events\MessagesRead($chatGroup, $user, [$chatMessage->id]))->toOthers();
+                broadcast(new MessagesRead($chatGroup, $user, [$chatMessage->id]))->toOthers();
 
                 return response()->json([
                     'success' => true,
@@ -210,7 +215,7 @@ class ChatMessageController extends Controller
     /**
      * Update user typing status
      */
-    public function updateTypingStatus(\App\Models\ChatGroup $chatGroup, \Illuminate\Http\Request $request)
+    public function updateTypingStatus(ChatGroup $chatGroup, Request $request)
     {
         try {
             $user = auth()->user();
@@ -226,7 +231,7 @@ class ChatMessageController extends Controller
             $isTyping = $request->boolean('is_typing', false);
 
             // Broadcast typing status
-            broadcast(new \App\Events\UserTyping($chatGroup, $user, $isTyping))->toOthers();
+            broadcast(new UserTyping($chatGroup, $user, $isTyping))->toOthers();
 
             return response()->json([
                 'success' => true,
