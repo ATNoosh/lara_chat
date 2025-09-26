@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Constants\AppConstants;
 use App\Models\ChatGroup;
-use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
@@ -12,9 +11,9 @@ use Illuminate\Support\Facades\DB;
 
 class ChatGroupRepository
 {
-    public function createFaceToFaceGroup(...$userIds): ChatGroup|null
+    public function createFaceToFaceGroup(...$userIds): ?ChatGroup
     {
-        $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
+        $userIds = Arr::flatten(is_array($userIds) ? $userIds : func_get_args());
         if (count($userIds) !== 2) {
             throw new Exception('Face to face groups must have 2 members!');
         }
@@ -28,22 +27,25 @@ class ChatGroupRepository
                     [
                         'creator_id' => $userIds[0],
                         'type' => ChatGroup::TYPE_FACE_TO_FACE,
-                        'is_private' => true
+                        'is_private' => true,
                     ]
                 );
                 $this->addMembersToGroup($newChatGroup->id, $userIds);
             } catch (Exception $exp) {
-                DB::rollBack();dd($exp);
+                DB::rollBack();
+                dd($exp);
+
                 return null;
             }
             DB::commit();
         }
+
         return $newChatGroup;
     }
 
-    public function getFaceToFaceGroup(...$userIds): ChatGroup|null
+    public function getFaceToFaceGroup(...$userIds): ?ChatGroup
     {
-        $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
+        $userIds = Arr::flatten(is_array($userIds) ? $userIds : func_get_args());
 
         $group = ChatGroup::faceToFace()->whereHas('members', function (Builder $query) use ($userIds) {
             $query->whereIn('user_id', $userIds);
@@ -52,7 +54,7 @@ class ChatGroupRepository
         return $group;
     }
 
-    public function createGroup(array $groupData): ChatGroup|null
+    public function createGroup(array $groupData): ?ChatGroup
     {
         $newChatGroup = ChatGroup::create(
             [
@@ -62,7 +64,7 @@ class ChatGroupRepository
                 'type' => $groupData['type'] ?? ChatGroup::TYPE_SIMPLE,
             ]
         );
-        
+
         return $newChatGroup;
     }
 
@@ -82,6 +84,7 @@ class ChatGroupRepository
             $this->addMembersToGroup($group->id, $allMemberIds);
 
             DB::commit();
+
             return $group;
         } catch (Exception $e) {
             DB::rollBack();
@@ -91,10 +94,10 @@ class ChatGroupRepository
 
     public function addMembersToGroup(int $groupId, ...$userIds)
     {
-        $userIds = Arr::flatten(is_array($userIds) ? $userIds: func_get_args());
+        $userIds = Arr::flatten(is_array($userIds) ? $userIds : func_get_args());
 
         $group = ChatGroup::find($groupId);
-        if (!$group) {
+        if (! $group) {
             throw new Exception('Group not found!');
         }
 
@@ -107,6 +110,7 @@ class ChatGroupRepository
     {
         $group = ChatGroup::findOrFail($groupId);
         $result = $group->members()->sync($userIds);
+
         return $result['attached'];
     }
 }

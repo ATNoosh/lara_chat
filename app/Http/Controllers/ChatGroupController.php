@@ -15,13 +15,13 @@ class ChatGroupController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $chatGroups = $user->chatGroups()->with(['members', 'creator', 'chatMessages' => function($query) {
+        $chatGroups = $user->chatGroups()->with(['members', 'creator', 'chatMessages' => function ($query) {
             $query->latest()->limit(1);
         }])->get();
 
         return response()->json([
             'success' => true,
-            'data' => $chatGroups
+            'data' => $chatGroups,
         ]);
     }
 
@@ -56,16 +56,16 @@ class ChatGroupController extends Controller
                     event(new \App\Events\GroupAdded($chatGroup, $member->id));
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Chat group created successfully',
-                'data' => $chatGroup->load(['members', 'creator'])
+                'data' => $chatGroup->load(['members', 'creator']),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -76,20 +76,20 @@ class ChatGroupController extends Controller
     public function show(ChatGroup $chatGroup)
     {
         $user = auth()->user();
-        
+
         // Check if user is member of this group
-        if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+        if (! $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not a member of this chat group'
+                'message' => 'You are not a member of this chat group',
             ], 403);
         }
 
         $chatGroup->load(['members', 'creator', 'chatMessages.sender']);
-        
+
         return response()->json([
             'success' => true,
-            'data' => $chatGroup
+            'data' => $chatGroup,
         ]);
     }
 
@@ -122,12 +122,12 @@ class ChatGroupController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Chat group updated successfully',
-                'data' => $chatGroup->load(['members', 'creator'])
+                'data' => $chatGroup->load(['members', 'creator']),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

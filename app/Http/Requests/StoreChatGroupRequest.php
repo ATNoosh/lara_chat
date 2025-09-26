@@ -28,7 +28,7 @@ class StoreChatGroupRequest extends FormRequest
                 'nullable',
                 'integer',
                 'exists:users,id',
-                'different:' . auth()->id()
+                'different:'.auth()->id(),
             ],
             // Group mode
             'memberIds' => [
@@ -39,9 +39,9 @@ class StoreChatGroupRequest extends FormRequest
             'memberIds.*' => [
                 'integer',
                 'exists:users,id',
-                'different:' . auth()->id()
+                'different:'.auth()->id(),
             ],
-            'name' => ['nullable', 'string', 'max:255']
+            'name' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

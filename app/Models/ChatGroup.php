@@ -13,8 +13,11 @@ use Illuminate\Support\Str;
 class ChatGroup extends Model
 {
     public const TYPE_SIMPLE = 'SIMPLE';
+
     public const TYPE_FACE_TO_FACE = 'FACE_TO_FACE';
+
     public const TYPES = [self::TYPE_SIMPLE, self::TYPE_FACE_TO_FACE];
+
     /** @use HasFactory<\Database\Factories\ChatGroupFactory> */
     use HasFactory;
 
@@ -23,7 +26,7 @@ class ChatGroup extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($model) {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid();

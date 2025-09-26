@@ -7,23 +7,23 @@ use App\Http\Requests\Api\Auth\LoginRequest;
 use App\Http\Requests\Api\Auth\RegisterRequest;
 use App\Models\User;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 
 class AuthenticateController extends Controller
 {
     use ApiResponse;
+
     public function login(LoginRequest $loginRequest): Response
     {
         $loginUserData = $loginRequest->validated();
         $user = User::where('email', $loginUserData['email'])->first();
-        if (!$user || !Hash::check($loginUserData['password'], $user->password)) {
+        if (! $user || ! Hash::check($loginUserData['password'], $user->password)) {
             return $this->failure([
-                'message' => 'Invalid Credentials'
+                'message' => 'Invalid Credentials',
             ], 401);
         }
-        $token = $user->createToken($user->name . '-AuthToken')->plainTextToken;
+        $token = $user->createToken($user->name.'-AuthToken')->plainTextToken;
 
         return $this->success(__('User loggined successfully!'), [
             'access_token' => $token,
@@ -34,13 +34,13 @@ class AuthenticateController extends Controller
     {
         $userData = $request->validated();
         $userData['password'] = Hash::make($userData['password']);
-        
+
         $user = User::create($userData);
-        $token = $user->createToken($user->name . '-AuthToken')->plainTextToken;
+        $token = $user->createToken($user->name.'-AuthToken')->plainTextToken;
 
         return $this->success(__('User registered successfully!'), [
             'access_token' => $token,
-            'user' => $user
+            'user' => $user,
         ], 201);
     }
 }

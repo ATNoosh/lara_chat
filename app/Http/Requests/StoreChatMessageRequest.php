@@ -29,7 +29,7 @@ class StoreChatMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message' => ['required', 'string', 'min:1', 'max:10000']
+            'message' => ['required', 'string', 'min:1', 'max:10000'],
         ];
     }
 }

@@ -3,10 +3,10 @@
 namespace App\Events;
 
 use App\Models\ChatGroup;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Queue\SerializesModels;
 
 class GroupAdded implements ShouldBroadcastNow
@@ -14,6 +14,7 @@ class GroupAdded implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public ChatGroup $group;
+
     public int $targetUserId;
 
     /**
@@ -33,7 +34,7 @@ class GroupAdded implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('App.Models.User.' . $this->targetUserId),
+            new PrivateChannel('App.Models.User.'.$this->targetUserId),
         ];
     }
 
@@ -44,5 +45,3 @@ class GroupAdded implements ShouldBroadcastNow
         ];
     }
 }
-
-

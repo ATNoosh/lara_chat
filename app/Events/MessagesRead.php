@@ -15,7 +15,9 @@ class MessagesRead implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $chatGroup;
+
     public $user;
+
     public $messageIds;
 
     /**
@@ -36,7 +38,7 @@ class MessagesRead implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('chat.' . $this->chatGroup->uuid),
+            new PrivateChannel('chat.'.$this->chatGroup->uuid),
         ];
     }
 
@@ -46,7 +48,7 @@ class MessagesRead implements ShouldBroadcastNow
             'chatGroup' => $this->chatGroup,
             'user' => $this->user,
             'messageIds' => $this->messageIds,
-            'readAt' => now()->toISOString()
+            'readAt' => now()->toISOString(),
         ];
     }
 }

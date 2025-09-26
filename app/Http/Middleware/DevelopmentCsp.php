@@ -20,7 +20,7 @@ class DevelopmentCsp
         $viteDev = file_exists(public_path('hot'));
 
         $scriptSrc = ["'self'", "'unsafe-eval'", "'unsafe-inline'"];
-        $styleSrc  = ["'self'", "'unsafe-inline'", 'https://fonts.bunny.net'];
+        $styleSrc = ["'self'", "'unsafe-inline'", 'https://fonts.bunny.net'];
         $connectSrc = [
             "'self'",
             'ws://127.0.0.1:8080',
@@ -35,10 +35,10 @@ class DevelopmentCsp
         }
 
         $csp = "default-src 'self'; "
-             . 'script-src ' . implode(' ', $scriptSrc) . '; '
-             . 'style-src ' . implode(' ', $styleSrc) . '; '
-             . "font-src 'self' https://fonts.bunny.net; "
-             . 'connect-src ' . implode(' ', $connectSrc) . ';';
+             .'script-src '.implode(' ', $scriptSrc).'; '
+             .'style-src '.implode(' ', $styleSrc).'; '
+             ."font-src 'self' https://fonts.bunny.net; "
+             .'connect-src '.implode(' ', $connectSrc).';';
 
         $response->headers->set('Content-Security-Policy', $csp);
 

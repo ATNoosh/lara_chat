@@ -16,25 +16,25 @@ class ChatMessageController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Check if user is member of this group
-            if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+            if (! $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not a member of this chat group'
+                    'message' => 'You are not a member of this chat group',
                 ], 403);
             }
 
             $messages = app(ChatMessageRepository::class)->getMessages($chatGroup);
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $messages->load('sender')
+                'data' => $messages->load('sender'),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -54,29 +54,29 @@ class ChatMessageController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Check if user is member of this group
-            if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+            if (! $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not a member of this chat group'
+                    'message' => 'You are not a member of this chat group',
                 ], 403);
             }
 
             $message = app(ChatMessageRepository::class)->sendMessage($user, $chatGroup, $request->message);
-            
+
             // Broadcast the message
             broadcast(new \App\Events\MessageSent($message))->toOthers();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Message sent successfully',
-                'data' => $message->load('sender')
+                'data' => $message->load('sender'),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -112,12 +112,12 @@ class ChatMessageController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Check if user is member of this group
-            if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+            if (! $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not a member of this chat group'
+                    'message' => 'You are not a member of this chat group',
                 ], 403);
             }
 
@@ -138,13 +138,13 @@ class ChatMessageController extends Controller
                 'success' => true,
                 'message' => 'Messages marked as read',
                 'data' => [
-                    'read_count' => $unreadMessages->count()
-                ]
+                    'read_count' => $unreadMessages->count(),
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -156,12 +156,12 @@ class ChatMessageController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Check if user is member of this group
-            if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+            if (! $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not a member of this chat group'
+                    'message' => 'You are not a member of this chat group',
                 ], 403);
             }
 
@@ -169,7 +169,7 @@ class ChatMessageController extends Controller
             if ($chatMessage->chat_group_id !== $chatGroup->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Message does not belong to this chat group'
+                    'message' => 'Message does not belong to this chat group',
                 ], 400);
             }
 
@@ -186,8 +186,8 @@ class ChatMessageController extends Controller
                     'data' => [
                         'message_id' => $chatMessage->id,
                         'status' => $chatMessage->status,
-                        'read_at' => $chatMessage->read_at
-                    ]
+                        'read_at' => $chatMessage->read_at,
+                    ],
                 ]);
             }
 
@@ -196,13 +196,13 @@ class ChatMessageController extends Controller
                 'message' => 'Message already read or is your own message',
                 'data' => [
                     'message_id' => $chatMessage->id,
-                    'status' => $chatMessage->status
-                ]
+                    'status' => $chatMessage->status,
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -214,12 +214,12 @@ class ChatMessageController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Check if user is member of this group
-            if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+            if (! $user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not a member of this chat group'
+                    'message' => 'You are not a member of this chat group',
                 ], 403);
             }
 
@@ -233,13 +233,13 @@ class ChatMessageController extends Controller
                 'message' => 'Typing status updated',
                 'data' => [
                     'is_typing' => $isTyping,
-                    'user_id' => $user->id
-                ]
+                    'user_id' => $user->id,
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
