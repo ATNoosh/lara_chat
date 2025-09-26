@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('chat_groups/{chatGroup:uuid}/messages', [ChatMessageController::class, 'store'])->name('chat_messages.store');
     Route::post('chat_groups/{chatGroup:uuid}/messages/read', [ChatMessageController::class, 'markAsRead'])->name('chat_messages.read');
     Route::post('chat_groups/{chatGroup:uuid}/messages/{chatMessage}/read', [ChatMessageController::class, 'markMessageAsRead'])->name('chat_messages.single_read');
+    Route::post('chat_groups/{chatGroup:uuid}/typing', [ChatMessageController::class, 'updateTypingStatus'])->name('chat_messages.typing');
     Route::get('chat_messages/{chatMessage}', [ChatMessageController::class, 'show'])->name('chat_messages.show');
     Route::put('chat_messages/{chatMessage}', [ChatMessageController::class, 'update'])->name('chat_messages.update');
     Route::delete('chat_messages/{chatMessage}', [ChatMessageController::class, 'destroy'])->name('chat_messages.destroy');

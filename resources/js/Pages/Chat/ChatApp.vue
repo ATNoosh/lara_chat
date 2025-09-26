@@ -180,6 +180,22 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Typing Indicator -->
+                        <div v-if="typingUsers.length > 0" class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-gray-200 text-gray-800">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex space-x-1">
+                                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-600">
+                                        {{ typingUsers.length === 1 ? typingUsers[0].name : `${typingUsers.length} people` }} {{ typingUsers.length === 1 ? 'is' : 'are' }} typing...
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Message Input (sticky bottom) -->
@@ -187,6 +203,9 @@
                         <form @submit.prevent="sendMessage" class="flex space-x-2">
                             <input
                                 v-model="newMessage"
+                                @input="onMessageInput"
+                                @keydown="onMessageKeydown"
+                                @keyup="onMessageKeyup"
                                 type="text"
                                 placeholder="Type a message..."
                                 class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -199,6 +218,7 @@
                                 Send
                             </button>
                         </form>
+                        
                     </div>
                 </div>
                 
@@ -316,6 +336,11 @@ const sidebarCollapsed = ref(false)
 const messageRefs = ref(new Map())
 let intersectionObserver = null
 
+// Typing status
+const typingUsers = ref([])
+let typingTimeout = null
+let isTyping = ref(false)
+
 // Toggle minimize/maximize
 const toggleMinimize = () => {
     isMinimized.value = !isMinimized.value
@@ -372,6 +397,14 @@ const loadAvailableUsers = async () => {
 
 // Select chat group
 const selectChatGroup = async (group) => {
+    // Stop typing in previous group
+    if (isTyping.value && selectedGroup.value?.uuid) {
+        updateTypingStatus(false)
+    }
+    
+    // Clear typing users list
+    typingUsers.value = []
+    
     selectedGroup.value = group
     await loadMessages(group.uuid)
     setupEchoListener(group.uuid)
@@ -474,6 +507,63 @@ const setupIntersectionObserver = () => {
     })
 }
 
+// Typing functions
+const updateTypingStatus = async (typing) => {
+    if (!selectedGroup.value?.uuid) return
+    
+    try {
+        const response = await axios.post(`/api/chat_groups/${selectedGroup.value.uuid}/typing`, {
+            is_typing: typing
+        })
+        isTyping.value = typing
+    } catch (error) {
+        console.error('Error updating typing status:', error)
+    }
+}
+
+const onMessageInput = () => {
+    if (!isTyping.value) {
+        updateTypingStatus(true)
+    }
+    
+    // Clear existing timeout
+    if (typingTimeout) {
+        clearTimeout(typingTimeout)
+    }
+    
+    // Set timeout to stop typing after 2 seconds of inactivity
+    typingTimeout = setTimeout(() => {
+        if (isTyping.value) updateTypingStatus(false)
+    }, 2000)
+}
+
+const onMessageKeydown = (event) => {
+    // Handle Enter key
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault()
+        sendMessage()
+        // Stop typing when message is sent
+        if (isTyping.value) {
+            updateTypingStatus(false)
+        }
+        if (typingTimeout) {
+            clearTimeout(typingTimeout)
+        }
+    }
+}
+
+const onMessageKeyup = (event) => {
+    // Handle Escape key to stop typing
+    if (event.key === 'Escape' && isTyping.value) {
+        updateTypingStatus(false)
+        if (typingTimeout) {
+            clearTimeout(typingTimeout)
+        }
+    }
+}
+
+// (debug helpers removed)
+
 // Send message
 const sendMessage = async () => {
     if (!newMessage.value.trim() || !selectedGroup.value) return
@@ -572,7 +662,6 @@ const setupEchoListener = (groupUuid) => {
             })
             .stopListening('MessagesRead')
             .listen('MessagesRead', (e) => {
-                console.log('Messages read:', e)
                 // Update message statuses
                 e.messageIds.forEach(messageId => {
                     const message = messages.value.find(m => m.id === messageId)
@@ -582,8 +671,20 @@ const setupEchoListener = (groupUuid) => {
                     }
                 })
             })
+            .stopListening('UserTyping')
+            .listen('UserTyping', (e) => {
+                // Update typing users list
+                if (e.is_typing) {
+                    // Add user to typing list if not already there
+                    if (!typingUsers.value.find(u => u.id === e.user.id)) {
+                        typingUsers.value.push(e.user)
+                    }
+                } else {
+                    // Remove user from typing list
+                    typingUsers.value = typingUsers.value.filter(u => u.id !== e.user.id)
+                }
+            })
         currentChannelGroupId = groupUuid
-        console.log(`Echo listener setup for chat.${groupUuid}`)
     } catch (error) {
         console.error('Failed to setup Echo listener:', error)
     }
@@ -659,6 +760,17 @@ onUnmounted(() => {
     if (intersectionObserver) {
         intersectionObserver.disconnect()
         intersectionObserver = null
+    }
+    
+    // Clean up typing timeout
+    if (typingTimeout) {
+        clearTimeout(typingTimeout)
+        typingTimeout = null
+    }
+    
+    // Stop typing if currently typing
+    if (isTyping.value && selectedGroup.value?.uuid) {
+        updateTypingStatus(false)
     }
 })
 </script>

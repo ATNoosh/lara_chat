@@ -208,6 +208,43 @@ class ChatMessageController extends Controller
     }
 
     /**
+     * Update user typing status
+     */
+    public function updateTypingStatus(\App\Models\ChatGroup $chatGroup, \Illuminate\Http\Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            // Check if user is member of this group
+            if (!$user->chatGroups()->where('chat_groups.id', $chatGroup->id)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not a member of this chat group'
+                ], 403);
+            }
+
+            $isTyping = $request->boolean('is_typing', false);
+
+            // Broadcast typing status
+            broadcast(new \App\Events\UserTyping($chatGroup, $user, $isTyping))->toOthers();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Typing status updated',
+                'data' => [
+                    'is_typing' => $isTyping,
+                    'user_id' => $user->id
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(ChatMessage $chatMessage)

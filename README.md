@@ -1,114 +1,126 @@
 # Lara Chat
 
-یک اپلیکیشن چت ساده با Laravel و Vue.js که از Laravel Reverb برای WebSocket استفاده می‌کند.
+A simple chat application built with Laravel and Vue.js that uses Laravel Reverb for WebSockets.
 
-## ویژگی‌ها
+## Features
 
-- ✅ چت دوبه دو (Direct Messages)
-- ✅ چت گروهی (Group Chat)
-- ✅ پیام‌رسانی بلادرنگ با Laravel Reverb
-- ✅ احراز هویت با Laravel Sanctum
-- ✅ رابط کاربری مدرن با Vue.js و Tailwind CSS
-- ✅ API کامل برای تمام عملیات چت
+- ✅ One-to-one chat (Direct Messages)
+- ✅ Group chat
+- ✅ Real‑time messaging via Laravel Reverb
+- ✅ Authentication with Laravel Sanctum
+- ✅ Modern UI with Vue.js and Tailwind CSS
+- ✅ Full API surface for chat operations
 
-## نصب و راه‌اندازی
+## Installation
 
-### پیش‌نیازها
+### Prerequisites
 
 - PHP 8.2+
 - Composer
-- Node.js و npm
-- SQLite
+- Node.js and npm
+- SQLite (default) or another supported database
 
-### مراحل نصب
+### Setup Steps
 
-1. **کلون کردن پروژه:**
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd lara_chat
 ```
 
-2. **نصب وابستگی‌های PHP:**
+2. Install PHP dependencies:
 ```bash
 composer install
 ```
 
-3. **نصب وابستگی‌های Node.js:**
+3. Install Node.js dependencies:
 ```bash
 npm install
 ```
 
-4. **کپی کردن فایل محیط:**
+4. Create your environment file:
 ```bash
 cp .env.example .env
 ```
 
-5. **تولید کلید اپلیکیشن:**
+5. Generate the application key:
 ```bash
 php artisan key:generate
 ```
 
-6. **اجرای migration ها:**
+6. Run database migrations and seeders:
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-7. **Build کردن frontend:**
+7. Build frontend assets (for production):
 ```bash
 npm run build
 ```
 
-### راه‌اندازی سرورها
+## Running the app
 
-1. **سرور Laravel:**
+Open two terminals (or use separate tabs):
+
+1. Start Laravel HTTP server:
 ```bash
-php artisan serve
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-2. **سرور Reverb (در ترمینال جداگانه):**
+2. Start Reverb (WebSocket) server:
 ```bash
-php artisan reverb:start
+php artisan reverb:start --host=127.0.0.1 --port=8080
 ```
 
-3. **سرور Vite برای development (اختیاری):**
+3. Optional: start Vite dev server (for hot reload during development):
 ```bash
 npm run dev
 ```
 
-## استفاده
+Notes for Windows PowerShell:
+- Use `;` between commands instead of `&&`.
+- If a port is already in use, change the `--port` value and update the matching `.env` values accordingly.
 
-1. به آدرس `http://localhost:8000` بروید
-2. یک حساب کاربری جدید ایجاد کنید یا وارد شوید
-3. از دکمه "Start New Chat" برای شروع چت جدید استفاده کنید
-4. کاربران موجود را انتخاب کنید تا چت دوبه دو شروع شود
+## Usage
+
+1. Navigate to `http://127.0.0.1:8000`
+2. Register a new account or log in
+3. Click "Start New Chat" to create a conversation
+4. Pick an existing user to start a direct chat, or create a group chat
 
 ## API Endpoints
 
-### احراز هویت
-- `POST /api/auth/login` - ورود
-- `POST /api/auth/register` - ثبت‌نام
+### Authentication
+- `POST /api/auth/login` — Log in
+- `POST /api/auth/register` — Register
 
-### چت گروه‌ها
-- `GET /api/chat_groups` - لیست گروه‌های چت
-- `POST /api/chat_groups` - ایجاد گروه چت جدید
-- `GET /api/chat_groups/{id}` - جزئیات گروه چت
-- `PUT /api/chat_groups/{id}` - ویرایش گروه چت
-- `DELETE /api/chat_groups/{id}` - حذف گروه چت
+### Chat Groups
+- `GET /api/chat_groups` — List chat groups
+- `POST /api/chat_groups` — Create a new chat group (DM or group)
+- `GET /api/chat_groups/{uuid}` — Show a chat group
+- `PUT /api/chat_groups/{uuid}` — Update a chat group
+- `DELETE /api/chat_groups/{uuid}` — Delete a chat group
 
-### پیام‌ها
-- `GET /api/chat_groups/{groupId}/messages` - لیست پیام‌های گروه
-- `POST /api/chat_groups/{groupId}/messages` - ارسال پیام جدید
-- `GET /api/chat_messages/{id}` - جزئیات پیام
-- `PUT /api/chat_messages/{id}` - ویرایش پیام
-- `DELETE /api/chat_messages/{id}` - حذف پیام
+### Messages
+- `GET /api/chat_groups/{groupUuid}/messages` — List messages in a group
+- `POST /api/chat_groups/{groupUuid}/messages` — Send a new message
+- `POST /api/chat_groups/{groupUuid}/messages/read` — Mark all as read (for member)
+- `POST /api/chat_groups/{groupUuid}/messages/{message}/read` — Mark one message as read
+- `GET /api/chat_messages/{id}` — Show a message
+- `PUT /api/chat_messages/{id}` — Update a message
+- `DELETE /api/chat_messages/{id}` — Delete a message
 
-### کاربران
-- `GET /api/users` - لیست کاربران موجود
+### Users
+- `GET /api/users` — List available users (excluding current user)
 
-## ساختار پروژه
+## Project Structure
 
 ```
 app/
+├── Events/
+│   ├── MessageSent.php
+│   ├── MessagesRead.php
+│   └── UserTyping.php
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Api/AuthenticateController.php
@@ -117,11 +129,9 @@ app/
 │   └── Requests/
 ├── Models/
 │   ├── ChatGroup.php
-│   ├── ChatMessage.php
 │   ├── ChatGroupMember.php
+│   ├── ChatMessage.php
 │   └── User.php
-├── Events/
-│   └── MessageSent.php
 └── Repositories/
 
 resources/js/
@@ -135,45 +145,45 @@ resources/js/
 └── echo.js
 ```
 
-## تنظیمات Reverb
+## Reverb Configuration
 
-برای استفاده از WebSocket، مطمئن شوید که تنظیمات زیر در فایل `.env` موجود است:
+To use WebSockets with Reverb, ensure these environment variables are set in your `.env` (adjust host/ports if needed):
 
 ```env
 BROADCAST_CONNECTION=reverb
 REVERB_APP_ID=local
 REVERB_APP_KEY=local
 REVERB_APP_SECRET=local
-REVERB_HOST="localhost"
-REVERB_PORT=8081
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
 REVERB_SCHEME=http
 
-VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
-VITE_REVERB_HOST="${REVERB_HOST}"
-VITE_REVERB_PORT="${REVERB_PORT}"
-VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+VITE_REVERB_APP_KEY=${REVERB_APP_KEY}
+VITE_REVERB_HOST=${REVERB_HOST}
+VITE_REVERB_PORT=${REVERB_PORT}
+VITE_REVERB_SCHEME=${REVERB_SCHEME}
 ```
 
-## تست
+## Testing
 
-برای تست عملکرد:
+To validate real‑time behavior:
 
-1. دو کاربر مختلف ایجاد کنید
-2. با هر کاربر در مرورگر جداگانه وارد شوید
-3. چت جدیدی بین آن‌ها ایجاد کنید
-4. پیام‌ها باید بلادرنگ نمایش داده شوند
+1. Create two different users
+2. Log in with each user in separate browsers or private windows
+3. Start a direct message or a group chat between them
+4. Messages, read receipts, and typing indicators should update in real time
 
-## نکات مهم
+## Important Notes
 
-- برای production، حتماً تنظیمات امنیتی را بررسی کنید
-- از Redis یا database برای queue استفاده کنید
-- SSL/TLS را برای WebSocket فعال کنید
-- تنظیمات CORS را برای API بررسی کنید
+- For production, review and harden security settings
+- Use queues (Redis or database) for broadcasting if needed
+- Enable SSL/TLS for WebSockets in production
+- Review CORS settings for your API and WebSockets
 
-## مشارکت
+## Contributing
 
-برای مشارکت در پروژه، لطفاً pull request ارسال کنید.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-## مجوز
+## License
 
-این پروژه تحت مجوز MIT منتشر شده است.
+This project is released under the MIT License.
