@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Temporarily disable CSP to debug blank page
         // $middleware->web([DevelopmentCsp::class]);
+        
+        // Register API middleware aliases
+        $middleware->alias([
+            'api.key' => \App\Http\Middleware\AuthenticateApiKey::class,
+            'tenant.scope' => \App\Http\Middleware\EnsureTenantScope::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

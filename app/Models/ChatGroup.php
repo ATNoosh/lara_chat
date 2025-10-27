@@ -21,7 +21,16 @@ class ChatGroup extends Model
     /** @use HasFactory<\Database\Factories\ChatGroupFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'creator_id', 'is_private', 'type', 'uuid'];
+    protected $fillable = [
+        'project_id',
+        'name',
+        'creator_id',
+        'creator_type',
+        'creator_end_user_id',
+        'is_private',
+        'type',
+        'uuid',
+    ];
 
     protected static function boot()
     {
@@ -64,13 +73,28 @@ class ChatGroup extends Model
         return $this->hasMany(ChatMessage::class, 'chat_group_id');
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, ChatGroupMember::class);
     }
 
+    public function endUserMembers(): BelongsToMany
+    {
+        return $this->belongsToMany(EndUser::class, ChatGroupMember::class, 'chat_group_id', 'end_user_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creator_id');
+    }
+
+    public function creatorEndUser(): BelongsTo
+    {
+        return $this->belongsTo(EndUser::class, 'creator_end_user_id');
     }
 }

@@ -11,7 +11,15 @@ class ChatMessage extends Model
     /** @use HasFactory<\Database\Factories\ChatMessageFactory> */
     use HasFactory;
 
-    protected $fillable = ['chat_group_id', 'sender_id', 'text', 'status', 'read_at'];
+    protected $fillable = [
+        'project_id',
+        'chat_group_id',
+        'sender_id',
+        'end_user_id',
+        'text',
+        'status',
+        'read_at',
+    ];
 
     protected $casts = [
         'read_at' => 'datetime',
@@ -24,9 +32,19 @@ class ChatMessage extends Model
 
     const STATUS_READ = 'read';
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function endUser(): BelongsTo
+    {
+        return $this->belongsTo(EndUser::class, 'end_user_id');
     }
 
     public function chatGroup(): BelongsTo
