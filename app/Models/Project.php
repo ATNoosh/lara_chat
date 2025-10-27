@@ -82,6 +82,11 @@ class Project extends Model
         return $this->hasMany(ProjectUsage::class);
     }
 
+    public function apiRequestLogs(): HasMany
+    {
+        return $this->hasMany(ApiRequestLog::class);
+    }
+
     // Helper methods
     public function isActive(): bool
     {
